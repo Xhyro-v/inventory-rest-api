@@ -1,0 +1,12 @@
+from sqlalchemy import String, Enum
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.db.base import Base
+from app.user.enum import UserRole
+
+class User(Base):
+    __tablename__ = "user"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    email : Mapped[str] = mapped_column(unique=True, nullable=False) 
+    role: Mapped[UserRole] = mapped_column(nullable=False)
+    password_hash: Mapped[str] = mapped_column(nullable=False)
