@@ -99,17 +99,17 @@ Authorization : Bearer <your_jwt_token>
 #### 4. Update Product
 * **Endpoint**: `PATCH /v1/products/{product_id}`
 * **Access**: Authenticated (`ADMIN`)
-* **Path Variable**: SKU
+* **Path Variable**: `product_id` (integer)
 * **Body Request**:
   * `name` (string, optional): Change product name.
   * `description` (string, optional): Change product description.
   * `price` (float, optional): Change product price.
-  * `status` (enums, optional): Change product status.
+  * `status` (enum, optional): Change product status (`active` / `inactive`).
 
 #### 5. Delete Product
 * **Endpoint**: `DELETE /v1/products/{product_id}`
 * **Access**: Authenticated (`ADMIN`)
-* **Path Variable**: SKU
+* **Path Variable**: `product_id` (integer)
 
 ---
 
@@ -117,21 +117,17 @@ Authorization : Bearer <your_jwt_token>
 
 #### 1. Get Stock Product
 * **Endpoint**: `GET /v1/products/{product_id}/stock`
-* **Access**: Authenticated (`ADMIN`,`STAFF`)
-* **Path Variable** : product_id
+* **Access**: Authenticated (`ADMIN`, `STAFF`)
+* **Path Variable**: `product_id` (integer)
 
 #### 2. Adjust Stock
 * **Endpoint**: `POST /v1/products/{product_id}/stock-adjustment`
 * **Access**: Authenticated (`ADMIN`)
-* **Path Variable**: SKU 
+* **Path Variable**: `product_id` (integer)
 * **Body Request**:
-  * `stock_change`(integer, default `0`): Quantity of the stock adjustments
-  * `reason` (enums, required): 
-                                `RESTOCK`
-                                `DAMAGED`
-                                `LOST`
-                                `MANUAL_CORRECTION`
-
+  * `stock_change` (integer, required): Quantity of the stock adjustment (e.g. +10 or -2)
+  * `reason` (enum, required): `RESTOCK`, `DAMAGED`, `LOST`, `MANUAL_CORRECTION`
+  
 ---
 
 ### Order Management 
