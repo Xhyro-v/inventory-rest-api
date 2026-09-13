@@ -57,21 +57,46 @@ when POST orders/ is called:
 
 1. Take product information like price, stock, status
 2. If the status is active and the stock is available, continue the order
-3. If the status inactive and the stock is unavailable product can't be taken 
-4. When the order is pending with status `PENDING` stock will ready to get adjustment(+/-) with the quantity of the product in the orders
-5. When the status is `CONFIRMED` after stock ready with adjustment request, `CONFIRMED` will immediately deducted from available stock.
+3. Perform Early Validation (Soft Check): If requested quantity exceeds current stock $\rightarrow$ reject order creation.
+4. Create order header with initial status PENDING and create corresponding order items.
+5. Record OrderHistory event (ORDER_CREATED).
+6. The early stock check is informational/validation only and does not
+reserve inventory. Stock availability must be re-evaluated when the
+order is confirmed.
+
 Flow:  
 
-``` CREATE
-PENDING
-  ↓
-stock made request
-
+``` CREATE ORDER
+      ↓
+   PENDING
+      ↓
+(no inventory change)
+      ↓
 CONFIRMED
-  ↓
-Stock -QTY
-
+      ↓
+(stock deducted)
+      ↓
 COMPLETED
-  ↓
-no stock adjustment 
+      ↓
+(no inventory change)
 ```
+
+#### `PENDING` $\rightarrow$ `CONFIRMED`
+* **PENDING**
+  * Acquire pessimistic row locks on all affected product rows within the same transaction before checking and modifying inventory.
+
+  - $\rightarrow$ read current stock
+  - $\rightarrow$ validate active
+  - $\rightarrow$ validate quantity
+  - $\rightarrow$ continue
+
+
+* **CONFIRMED**
+  - $\rightarrow$ re-check
+  - $\rightarrow$ re-validate
+  - $\rightarrow$ deduct stock
+  - $\rightarrow$ OrderHistory
+  - $\rightarrow$ StockHistory
+  - $\rightarrow$ change order status
+  - $\rightarrow$ commit
+  
