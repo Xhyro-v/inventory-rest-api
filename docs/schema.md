@@ -5,6 +5,13 @@
   * Role
   * Password (Hashed)
 
+* Customer
+  * customer_id
+  * name
+  * phone
+  * created_at
+  * updated_at
+
 * **Product**
   * identifier(product_id)
   * SKU
@@ -59,7 +66,7 @@
 
 
 ## Entity Relationships
-
+- User 1:N Order
 - User 1:N OrderHistory
 - User 1:N StockHistory
 - Customer 1:N Order

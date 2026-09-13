@@ -111,12 +111,14 @@ Authorization : Bearer <your_jwt_token>
 * **Access**: Authenticated (`ADMIN`)
 * **Path Variable**: SKU
 
+---
+
 ### Product Stock Adjustments
 
 #### 1. Get Stock Product
 * **Endpoint**: `GET /v1/products/{product_id}/stock`
 * **Access**: Authenticated (`ADMIN`,`STAFF`)
-* **Path Variable** : SKU 
+* **Path Variable** : product_id
 
 #### 2. Adjust Stock
 * **Endpoint**: `POST /v1/products/{product_id}/stock-adjustment`
@@ -130,7 +132,7 @@ Authorization : Bearer <your_jwt_token>
                                 `LOST`
                                 `MANUAL_CORRECTION`
 
-
+---
 
 ### Order Management 
 
@@ -180,3 +182,15 @@ Authorization : Bearer <your_jwt_token>
 * **Query Parameters**:
   * `page` (int, default: `1`): Page number.
   * `limit` (int, default: `10`): Total data.`
+
+---
+
+### Stock History
+
+### 1. Get Stock History
+* **Endpoint**: `GET /v1/stock-history`
+* **Access**: Authenticated (`ADMIN`)
+* **Query Parameters**:
+  * `page` (int, default: `1`): Page number.
+  * `limit` (int, default: `10`): Total data.`
+
