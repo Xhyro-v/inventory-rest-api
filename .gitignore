@@ -1,3 +1,5 @@
 Scope/
 
 .vscode/
+
+__pycache__/
