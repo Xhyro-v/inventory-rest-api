@@ -3,3 +3,5 @@ Scope/
 .vscode/
 
 __pycache__/
+
+.env

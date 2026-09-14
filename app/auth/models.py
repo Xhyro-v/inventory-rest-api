@@ -5,7 +5,7 @@ from app.db.base import Base
 from app.auth.enum import UserRole
 
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = 'users'
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     email : Mapped[str] = mapped_column(unique=True, nullable=False) 
     role: Mapped[UserRole] = mapped_column(nullable=False)
