@@ -2,7 +2,7 @@ from sqlalchemy import String, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
-from app.user.enum import UserRole
+from app.auth.enum import UserRole
 
 class User(Base):
     __tablename__ = "user"
