@@ -25,4 +25,4 @@ class Product(Base):
                 onupdate=func.now()
         )
 
-        detail: Mapped["ProductDetail"] = relationship(back_populates="product")
+        order_items = relationship("OrderItem",back_populates="product")

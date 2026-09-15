@@ -22,4 +22,4 @@ class Customer(Base):
             onupdate=func.now()
         )
         
-        orders: Mapped[List["Order"]] = relationship(back_populates="customer")
+        orders = relationship("Order",back_populates="customers")
