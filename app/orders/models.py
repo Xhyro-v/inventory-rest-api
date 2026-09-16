@@ -29,6 +29,7 @@ class Order(Base):
 
     customers = relationship("Customer", back_populates="orders")
     order_items = relationship("OrderItem",back_populates="orders")
+    order_history = relationship("OrderHistory",back_populates="orders")
 
 class OrderItem(Base):
     __tablename__ = 'order_items'
@@ -40,6 +41,7 @@ class OrderItem(Base):
     subtotal : Mapped[Decimal] = mapped_column(Numeric(7, 2), nullable=False)
 
     products = relationship("Product", back_populates="order_items")
+    orders = relationship("Order", back_populates="order_items")
 
     
 
@@ -47,3 +49,17 @@ class OrderHistory(Base):
     __tablename__ = 'order_history'
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    order_id : Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)
+    event : Mapped[OrderEvent] = mapped_column(nullable=False)
+    user : Mapped[int] = mapped_column(ForeignKey('users.id'),nullable=False)
+    status_before : Mapped[OrderStatus] = mapped_column(nullable=False)
+    status_after : Mapped[OrderStatus] = mapped_column(nullable=False)
+    reason : Mapped[str | None] = mapped_column(Text(256), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+                            DateTime(timezone=True), 
+                            server_default=func.now()
+                        )
+
+    orders = relationship("Order", back_populates="order_history")
+    users = relationship("User", back_populates="order_history")
