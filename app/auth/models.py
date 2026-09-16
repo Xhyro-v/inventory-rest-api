@@ -12,3 +12,4 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(nullable=False)
 
     order_history = relationship("OrderHistory", back_populates="users")
+    stock_history = relationship("StockHistory", back_populates="users")

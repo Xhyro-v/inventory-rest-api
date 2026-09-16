@@ -25,4 +25,7 @@ class Product(Base):
                 onupdate=func.now()
         )
 
-        order_items = relationship("OrderItem",back_populates="product")
+        order_items = relationship("OrderItem",back_populates="products")
+        stock_history = relationship("StockHistory",back_populates="products")
+        users = relationship("User",back_populates="products")
+        

@@ -12,8 +12,8 @@ class Order(Base):
     __tablename__ = 'orders'
     
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    customer : Mapped[List["Customer"]] = relationship(back_populates=order, cascade="all, delete-orphan")
-    order_item : Mapped[List["OrderItem"]] = relationship(back_populates=order, cascade="all, delete-orphan")
+    customers : Mapped[List["Customer"]] = relationship(back_populates=order, cascade="all, delete-orphan")
+    order_items : Mapped[List["OrderItem"]] = relationship(back_populates=order, cascade="all, delete-orphan")
     total_amount : Mapped[Decimal] = mapped_column(Numeric(8, 2), nullable=False)
     status : Mapped["OrderStatus"] = mapped_column(nullable=False)
 
@@ -30,6 +30,7 @@ class Order(Base):
     customers = relationship("Customer", back_populates="orders")
     order_items = relationship("OrderItem",back_populates="orders")
     order_history = relationship("OrderHistory",back_populates="orders")
+    stock_history = relationship("StockHistory", back_populates="orders")
 
 class OrderItem(Base):
     __tablename__ = 'order_items'
