@@ -8,10 +8,11 @@ from app.db.base import Base
 
 class Product(Base):
         __tablename__ = 'products'
-        id : Mapped[int] = mapped_column(index=True, primary_key=True)
+
+        id : Mapped[int] = mapped_column(primary_key=True, index=True)
         sku : Mapped[str] = mapped_column(String(12), index=True, unique=True, nullable=False)
         name : Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
-        description: Mapped[str | None] = mapped_column(Text(256), nullable=True)
+        description: Mapped[str | None] = mapped_column(Text, nullable=True)
         price : Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False)
         stock : Mapped[int] = mapped_column(Integer, default=1,nullable=False)
         status : Mapped[bool] = mapped_column(Boolean,default=True,server_default="1",nullable=False)

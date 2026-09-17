@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, ForeignKey, Decimal, Numeric, DateTime, func, Text
+from sqlalchemy import String, Integer, ForeignKey, DECIMAL, Numeric, DateTime, func, Text
 from typing import List
 from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,9 +12,8 @@ class Order(Base):
     __tablename__ = 'orders'
     
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    customers : Mapped[List["Customer"]] = relationship(back_populates=order, cascade="all, delete-orphan")
-    order_items : Mapped[List["OrderItem"]] = relationship(back_populates=order, cascade="all, delete-orphan")
-    total_amount : Mapped[Decimal] = mapped_column(Numeric(8, 2), nullable=False)
+    customer_id : Mapped[int] = mapped_column(ForeignKey('customers.id'), nullable=False)
+    total_amount : Mapped[DECIMAL] = mapped_column(Numeric(8, 2), nullable=False)
     status : Mapped["OrderStatus"] = mapped_column(nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
@@ -28,18 +27,21 @@ class Order(Base):
     )
 
     customers = relationship("Customer", back_populates="orders")
-    order_items = relationship("OrderItem",back_populates="orders")
-    order_history = relationship("OrderHistory",back_populates="orders")
-    stock_history = relationship("StockHistory", back_populates="orders")
+
+    order_items : Mapped[List["OrderItem"]] = relationship(back_populates="orders", cascade="all, delete-orphan")
+
+    order_history : Mapped[List["OrderHistory"]]= relationship(back_populates="orders")
+    
+    stock_history : Mapped[List["StockHistory"]]= relationship(back_populates="orders")
 
 class OrderItem(Base):
     __tablename__ = 'order_items'
     
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    product_id : Mapped[int] = mapped_column(ForeignKey('produtcs.id'), nullable=False)
+    product_id : Mapped[int] = mapped_column(ForeignKey('products.id'), nullable=False)
     quantity : Mapped[int] = mapped_column(nullable=False)
-    unit_price : Mapped[Decimal] = mapped_column(ForeignKey('products.price'))
-    subtotal : Mapped[Decimal] = mapped_column(Numeric(7, 2), nullable=False)
+    unit_price : Mapped[DECIMAL] = mapped_column(Numeric(6,2), nullable=False)
+    subtotal : Mapped[DECIMAL] = mapped_column(Numeric(7, 2), nullable=False)
 
     products = relationship("Product", back_populates="order_items")
     orders = relationship("Order", back_populates="order_items")
@@ -55,7 +57,7 @@ class OrderHistory(Base):
     user : Mapped[int] = mapped_column(ForeignKey('users.id'),nullable=False)
     status_before : Mapped[OrderStatus] = mapped_column(nullable=False)
     status_after : Mapped[OrderStatus] = mapped_column(nullable=False)
-    reason : Mapped[str | None] = mapped_column(Text(256), nullable=True)
+    reason : Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
                             DateTime(timezone=True), 
