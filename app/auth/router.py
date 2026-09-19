@@ -15,7 +15,14 @@ auth_router = APIRouter(
 
 @auth_router.post("/registration")
 def user_registration_router(
-            data: UserRegister,
-            db: Session = Depends(get_db)
+        data: UserRegister,
+        db: Session = Depends(get_db)
 ):
         return register_user(db, data)
+
+@auth_router.post("/login")
+def user_login_router(
+        data : UserLogin,
+        db : Session = Depends(get_db)
+):
+        return login_user(db, data)

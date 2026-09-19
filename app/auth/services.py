@@ -21,7 +21,7 @@ from app.auth.repositories import get_by_email
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
-# Inisialisasi PasswordHash dengan Argon2
+# Inisialisasi PasswordHash diubah menjadi dengan Argon2
 pwd_context = PasswordHash((Argon2Hasher(),))
 
 ############################################################################################################
@@ -125,7 +125,7 @@ def register_user(db: Session, data: UserRegister) -> dict:
     new_user = UserModel(
         email=data.email,
         role=data.role,
-        password_hash=password_hash,   # <-- pakai kolom yang benar sesuai model
+        password_hash=password_hash, 
     )
 
     try:
