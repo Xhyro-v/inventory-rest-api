@@ -1,15 +1,18 @@
-from sqlalchemy import String, Enum
+from sqlalchemy import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import List
 
 from app.db.base import Base
 from app.auth.enum import UserRole
 
+
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
+
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    email : Mapped[str] = mapped_column(unique=True, nullable=False) 
-    role: Mapped[UserRole] = mapped_column(nullable=False)
+    email: Mapped[str] = mapped_column(unique=True, nullable=False)
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False)
     password_hash: Mapped[str] = mapped_column(nullable=False)
 
-    order_history = relationship("OrderHistory", back_populates="users")
-    stock_history = relationship("StockHistory", back_populates="users")
+    order_histories: Mapped[List["OrderHistory"]] = relationship("OrderHistory", back_populates="user")
+    stock_histories: Mapped[List["StockHistory"]] = relationship("StockHistory", back_populates="user")
