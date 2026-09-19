@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from app.auth.router import auth_router
+import app.db.base_all_model
 
+app = FastAPI(
+    title="API"
+)
 
-@app.get("/")
-def read_root():
-    return {"message": "Hello World"}
+app.include_router(auth_router)

@@ -8,14 +8,8 @@ class UserLogin(BaseModel):
 class UserRegister(BaseModel):
     email: EmailStr
     role : UserRole
-    password: str = Field(..., min_length=8, max_length=20)
+    password: str 
     confirm_password: str
-
-    @model_validator(mode="after")
-    def verify_passwords_match(self):
-        if self.password != self.confirm_password:
-            raise ValueError("Password and confirm password do not match")
-        return self
 
 class Token(BaseModel):
         acces_token : str
