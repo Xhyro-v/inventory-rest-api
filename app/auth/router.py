@@ -7,11 +7,7 @@ from app.db.session import get_db
 from app.auth.services import get_current_user, login_user, register_user, oauth2_scheme
 
 
-auth_router = APIRouter(
-        prefix="/auth",
-        tags=["Authentication"]
-)
-
+auth_router = APIRouter()
 
 @auth_router.post("/registration")
 def user_registration_router(
