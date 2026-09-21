@@ -81,13 +81,43 @@ def get_current_user(
         if user is None:
             raise credentials_exception
 
-        if getattr(user, "role", None) != (UserRole.ADMIN, UserRole.STAFF)  :
+        if getattr(user, "role", None) not in (UserRole.ADMIN, UserRole.STAFF)  :
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Acces rejected : Only for admin or staff",
+            )
+
+        return user
+
+def get_current_access(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+) -> UserModel:
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token invalid or expire",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+        payload = verify_access_token(token)
+        if not payload:
+            raise credentials_exception
+
+        email: str | None = payload.get("sub")
+        if not email:
+            raise credentials_exception
+
+        user = get_by_email(db, email=email)
+        if user is None:
+            raise credentials_exception
+
+        if getattr(user, "role", None) != (UserRole.ADMIN)  :
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Acces rejected : Only for admin",
             )
 
         return user
+
+
 ############################################################################################################
 
 

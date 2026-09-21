@@ -1,4 +1,3 @@
-from app.auth.schemas import UserRegister, UserLogin
 from sqlalchemy.orm import Session 
 from app.auth.models import User 
 

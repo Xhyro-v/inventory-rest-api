@@ -7,10 +7,4 @@ app = FastAPI(
     title="API"
 )
 
-auth_router = APIRouter(
-        prefix="/v1/auth",
-        tags=["Authentication"]
-)
-
-
 app.include_router(auth_router)
