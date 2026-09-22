@@ -63,59 +63,43 @@ def verify_access_token(token : str):
 def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ) -> UserModel:
-        credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalid or expire",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token invalid or expired",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
-        payload = verify_access_token(token)
-        if not payload:
-            raise credentials_exception
+    payload = verify_access_token(token)
+    if not payload:
+        raise credentials_exception
 
-        email: str | None = payload.get("sub")
-        if not email:
-            raise credentials_exception
+    email: str | None = payload.get("sub")
+    if not email:
+        raise credentials_exception
 
-        user = get_by_email(db, email=email)
-        if user is None:
-            raise credentials_exception
+    user = get_by_email(db, email=email)
+    if user is None:
+        raise credentials_exception
 
-        if getattr(user, "role", None) not in (UserRole.ADMIN, UserRole.STAFF)  :
+    return user
+
+class RoleChecker:
+    def __init__(self, allowed_roles: list[UserRole]):
+        self.allowed_roles = allowed_roles
+
+    def __call__(self, user: UserModel = Depends(get_current_user)) -> UserModel:
+        user_role = getattr(user, "role", None)
+        
+        if user_role not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Acces rejected : Only for admin or staff",
+                detail="Access rejected: Insufficient permissions",
             )
-
         return user
 
-def get_current_access(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-) -> UserModel:
-        credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalid or expire",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-        payload = verify_access_token(token)
-        if not payload:
-            raise credentials_exception
-
-        email: str | None = payload.get("sub")
-        if not email:
-            raise credentials_exception
-
-        user = get_by_email(db, email=email)
-        if user is None:
-            raise credentials_exception
-
-        if getattr(user, "role", None) != (UserRole.ADMIN)  :
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Acces rejected : Only for admin",
-            )
-
-        return user
+# Shortcut for router to get easier to call
+allow_admin_only = RoleChecker([UserRole.ADMIN])
+allow_staff_and_admin = RoleChecker([UserRole.ADMIN, UserRole.STAFF])
 
 
 ############################################################################################################

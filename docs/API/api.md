@@ -91,6 +91,7 @@ Authorization : Bearer <your_jwt_token>
 * **Endpoint**: `POST /v1/products`
 * **Access**: Authenticated (`ADMIN`)
 * **Body Request**:
+  * `sku` (string): product unique alphanumeric
   * `name` (string): Product name.
   * `description` (string): Product description.
   * `price` (float): Product price.

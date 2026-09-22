@@ -1,0 +1,41 @@
+from pydantic import BaseModel, Field
+
+class ProductCreate(BaseModel):
+        sku : str = Field(
+                description="The SKU must be filled out in the format: name-series (using a hyphen)"
+        )
+        name : str = Field(
+                min_length=3,
+                max_length=30,
+                description="User name"
+        )
+        description : str | None = None
+        price : int = Field(
+                gt=0,
+                description="Price must be greater than 0"
+        )
+        stock : int = Field(
+                ge=0,
+                default=1,
+                description="Stock can't be zero or neagatif"
+        )
+        status : bool = Field(
+                default=False,
+                description="Product status active/inactive as True/False"
+        )
+
+class ProductResponse(BaseModel):
+        name : str 
+        description : str
+        price : int
+        stock : int
+
+class ProductStockUpdate(BaseModel):
+        stock : int 
+
+class ProductUpdate(BaseModel):
+        name : str | None = None
+        description : str | None = None
+        price : int | None = None
+        status : bool | None = None
+

@@ -13,7 +13,7 @@ class Order(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     customer_id: Mapped[int] = mapped_column(ForeignKey('customers.id'), nullable=False)
-    total_amount: Mapped[Decimal] = mapped_column(Numeric(8, 2), nullable=False)
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus), nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
@@ -39,8 +39,8 @@ class OrderItem(Base):
     order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)  # <-- FIX: kolom ini yang hilang
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), nullable=False)
     quantity: Mapped[int] = mapped_column(nullable=False)
-    unit_price: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False)
-    subtotal: Mapped[Decimal] = mapped_column(Numeric(7, 2), nullable=False)
+    unit_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    subtotal: Mapped[Decimal] = mapped_column(Numeric(11, 2), nullable=False)
 
     product: Mapped["Product"] = relationship("Product", back_populates="order_items")
     order: Mapped["Order"] = relationship("Order", back_populates="order_items")
