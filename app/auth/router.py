@@ -4,7 +4,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.auth.schemas import UserRegister, UserLogin
 from app.db.session import get_db
-from app.auth.services import get_current_user, login_user, register_user, allow_admin_only, allow_staff_and_admin
+from app.auth.services import register_user, login_user
+from app.dependencies.auth import get_current_user, RoleChecker, allow_admin_only, allow_staff_and_admin
 
 
 auth_router = APIRouter(\
@@ -15,9 +16,9 @@ auth_router = APIRouter(\
 
 @auth_router.post("/registration")
 def user_registration_router(
-        allow_admin_only,
         data: UserRegister,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        admin_user = Depends(allow_admin_only)
 ):
         return register_user(db, data)
 
@@ -26,4 +27,16 @@ def user_login_router(
         data : UserLogin,
         db : Session = Depends(get_db)
 ):
+        return login_user(db, data)
+
+@auth_router.post("/token")
+def get_access_token(
+        form_data: OAuth2PasswordRequestForm = Depends(),
+        db: Session = Depends(get_db)
+):
+        data = UserLogin(
+                email=form_data.username,
+                password=form_data.password
+        )
+
         return login_user(db, data)

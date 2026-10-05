@@ -9,7 +9,7 @@ from fastapi import HTTPException, Depends, status
 from app.db.session import get_db
 from app.products.models import Product as ProductModel
 from app.products.repository import get_by_id, create_product
-from app.auth.services import get_current_user, RoleChecker
+from app.dependencies.auth import get_current_user, RoleChecker
 from app.products.schemas import ProductCreate, ProductUpdate, ProductStockUpdate
 
 
