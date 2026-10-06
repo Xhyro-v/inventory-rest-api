@@ -18,7 +18,7 @@ auth_router = APIRouter(\
 def user_registration_router(
         data: UserRegister,
         db: Session = Depends(get_db),
-        admin_user = Depends(allow_admin_only)
+        access = Depends(allow_admin_only)
 ):
         return register_user(db, data)
 
@@ -34,6 +34,10 @@ def get_access_token(
         form_data: OAuth2PasswordRequestForm = Depends(),
         db: Session = Depends(get_db)
 ):
+
+        print("DEBUG SWAGGER USERNAME:", repr(form_data.username))
+        print("DEBUG SWAGGER PASSWORD:", repr(form_data.password))
+              
         data = UserLogin(
                 email=form_data.username,
                 password=form_data.password

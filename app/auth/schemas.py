@@ -6,10 +6,10 @@ class UserLogin(BaseModel):
         password : str
 
 class UserRegister(BaseModel):
-    email: EmailStr
-    role : UserRole
-    password: str 
-    confirm_password: str
+        email: EmailStr
+        role : UserRole
+        password: str 
+        confirm_password: str
 
 class Token(BaseModel):
         acces_token : str
