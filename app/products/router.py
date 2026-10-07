@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 
-from app.products.services import create_product_service
+from app.products.services import create_product_service, get_product_by_sku, get_product_by_id
 from app.products.schemas import ProductCreate
 from app.products.models import Product
 from app.db.session import get_db
@@ -44,3 +44,23 @@ def get_list_products(
         - **limit** (int, default: `10`): Total data.
         """
         return service.paginate(params.page, params.limit)
+
+
+@products_router.get("/{product_id}")
+def get_product_by_id_r(
+        product_id: int,
+        db: Session = Depends(get_db),
+):
+        return get_product_by_id(db, product_id)
+
+
+
+@products_router.get("/SKU/{product_sku}")
+def get_product_by_sku_r(
+        product_sku: str,
+        db: Session = Depends(get_db),
+):
+        return get_product_by_sku(db, product_sku)
+
+
+
