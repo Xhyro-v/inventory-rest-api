@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 class ProductCreate(BaseModel):
         sku : str = Field(
@@ -24,11 +24,23 @@ class ProductCreate(BaseModel):
                 description="Product status active/inactive as True/False"
         )
 
-class ProductResponse(BaseModel):
-        name : str 
-        description : str
-        price : int
-        stock : int
+
+
+
+class ORMSchema(BaseModel):
+        """Base schema agar bisa dibuat dari objek ORM."""
+
+        model_config = ConfigDict(from_attributes=True)
+
+
+class ProductResponse(ORMSchema):
+        id: int
+        sku: str
+        name: str
+        description: str
+        price: int
+        stock: int
+        status: bool
 
 class ProductStockUpdate(BaseModel):
         stock : int 
