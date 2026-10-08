@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 
-from app.products.services import create_product_service, get_product_by_sku, get_product_by_id
-from app.products.schemas import ProductCreate
+from app.products.services import create_product_service, update_product_service, get_product_by_sku, get_product_by_id
+from app.products.schemas import ProductCreate, ProductUpdate, ProductResponse
 from app.products.models import Product
 from app.db.session import get_db
 from app.dependencies.auth import get_current_user, RoleChecker, allow_admin_only, allow_staff_and_admin
@@ -31,6 +31,16 @@ def create_product(
 
 ):
         return create_product_service(db, data)
+
+
+@products_router.patch("")
+def update_product(
+        data: ProductUpdate,
+        product_id: int,
+        db: Session = Depends(get_db),
+
+):
+        return update_product_service(db, product_id, data)
 
 
 @products_router.get("", response_model=PaginatedResponse[ProductResponse])

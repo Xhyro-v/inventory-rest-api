@@ -17,7 +17,7 @@ class ProductCreate(BaseModel):
         stock : int = Field(
                 ge=0,
                 default=1,
-                description="Stock can't be zero or neagatif"
+                description="Stock can't be zero or negatif"
         )
         status : bool = Field(
                 default=False,

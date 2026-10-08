@@ -18,13 +18,13 @@ def create_product(db: Session, product: Product) -> Product:
 
         return product 
 
-def update_product(db, Session, product: Product) -> Product:
+def update_product(db: Session, product: Product) -> Product:
         db.commit()
         db.refresh(product)
 
         return product
 
-def delete_product(db, Session, product: Product) -> Product:
+def delete_product(db: Session, product: Product) -> Product:
         db.delete()
         db.refresh(product)
 
