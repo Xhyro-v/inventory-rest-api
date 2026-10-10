@@ -1,8 +1,8 @@
-"""user
+"""ReInit after switching OS
 
-Revision ID: 05627b6832ad
+Revision ID: 8ba9d8f351d0
 Revises: 
-Create Date: 2026-09-24 19:02:52.073626
+Create Date: 2026-10-10 08:00:11.945851
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '05627b6832ad'
+revision: str = '8ba9d8f351d0'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
