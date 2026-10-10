@@ -4,7 +4,7 @@ from fastapi import HTTPException, Depends, status
 
 from app.db.session import get_db
 from app.products.models import Product as ProductModel
-from app.products.repository import get_by_id, create_product, update_product, get_by_sku, delete_product
+from app.products.repository import get_by_id, create_product, update_product, get_by_sku, delete_product, get_stock_product
 from app.dependencies.auth import get_current_user, RoleChecker
 from app.products.schemas import ProductCreate, ProductUpdate, ProductStockUpdate
 
@@ -138,3 +138,31 @@ def get_product_by_id(
                 )
 
         return product
+
+
+
+
+def get_stock_product_service(
+        db: Session,
+        product_id: int
+):
+        product = get_by_id(db, product_id)
+        if not product:
+                raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Product with id={product_id} not found"
+                                )
+
+        product_stock = get_stock_product(db, product_id)
+
+        if not product_stock:
+                raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Product data not found"
+                )
+        return {
+                "message": f"{product.name} stock",
+                "stock": product.stock
+        }
+
+

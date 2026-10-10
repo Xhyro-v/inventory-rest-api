@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 
-from app.products.services import create_product_service, update_product_service, delete_product_service,  get_product_by_sku, get_product_by_id
+from app.products.services import create_product_service, update_product_service, delete_product_service,  get_product_by_sku, get_product_by_id, get_stock_product_service
 from app.products.schemas import ProductCreate, ProductUpdate, ProductResponse
 from app.products.models import Product
 from app.db.session import get_db
@@ -38,6 +38,7 @@ def update_product(
         data: ProductUpdate,
         product_id: int,
         db: Session = Depends(get_db),
+        access = Depends(allow_admin_only)
 
 ):
         return update_product_service(db, product_id, data)
@@ -45,7 +46,7 @@ def update_product(
 @products_router.delete("/{product_id}")
 def delete_product(
         product_id: int,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
         access = Depends(allow_admin_only)
 ):
         return delete_product_service(db, product_id)
@@ -54,7 +55,7 @@ def delete_product(
 def get_list_products(
         params: PaginationParams = Depends(),
         service: ProductService = Depends(get_product_service),
-        access = Depends(allow_admin_only)
+        access = Depends(allow_staff_and_admin)
 ):
         """
         - **page** (int, default: `1`): Page number.
@@ -79,5 +80,10 @@ def get_product_by_sku_r(
 ):
         return get_product_by_sku(db, product_sku)
 
-
+@products_router.get("/{product_id}/stock")
+def get_stock_product_r(
+        product_id: int,
+        db: Session = Depends(get_db)
+):
+        return get_stock_product_service(db, product_id)
 
