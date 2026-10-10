@@ -42,7 +42,7 @@ def update_product(
 ):
         return update_product_service(db, product_id, data)
 
-@products_router.delete("")
+@products_router.delete("/{product_id}")
 def delete_product(
         product_id: int,
         db: Session = Depends(get_db)
