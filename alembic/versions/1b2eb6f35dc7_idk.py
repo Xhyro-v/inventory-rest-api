@@ -1,8 +1,8 @@
-"""ReInit after switching OS
+"""idk
 
-Revision ID: 8ba9d8f351d0
+Revision ID: 1b2eb6f35dc7
 Revises: 
-Create Date: 2026-10-10 08:00:11.945851
+Create Date: 2026-10-12 22:29:04.708409
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8ba9d8f351d0'
+revision: str = '1b2eb6f35dc7'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -98,7 +98,7 @@ def upgrade() -> None:
     sa.Column('quantity_change', sa.Integer(), nullable=False),
     sa.Column('stock_before', sa.Integer(), nullable=False),
     sa.Column('stock_after', sa.Integer(), nullable=False),
-    sa.Column('reason', sa.Text(), nullable=True),
+    sa.Column('reason', sa.Enum('restock', 'damaged', 'lost', 'manual_corretion', name='reason'), nullable=True),
     sa.Column('order_id', sa.Integer(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),

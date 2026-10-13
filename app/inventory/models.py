@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import Text, func, DateTime, ForeignKey
+from sqlalchemy import Text, func, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.products.enums import Reason
 
 
 class StockHistory(Base):
@@ -14,7 +15,7 @@ class StockHistory(Base):
     quantity_change: Mapped[int] = mapped_column(nullable=False)
     stock_before: Mapped[int] = mapped_column(nullable=False)
     stock_after: Mapped[int] = mapped_column(nullable=False)
-    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reason: Mapped[Reason] = mapped_column(Enum(Reason),nullable=True)
     order_id: Mapped[int | None] = mapped_column(ForeignKey("orders.id"), nullable=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 

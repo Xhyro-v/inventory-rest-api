@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 
-from app.products.services import create_product_service, update_product_service, delete_product_service,  get_product_by_sku, get_product_by_id, get_stock_product_service
-from app.products.schemas import ProductCreate, ProductUpdate, ProductResponse
+from app.products.services import create_product_service, update_product_service, delete_product_service,  get_product_by_sku, get_product_by_id, get_stock_product_service, adjust_stock_product
+from app.products.schemas import ProductCreate, ProductUpdate, ProductResponse, ProductStockAdjust
 from app.products.models import Product
 from app.db.session import get_db
 from app.dependencies.auth import get_current_user, RoleChecker, allow_admin_only, allow_staff_and_admin
@@ -15,6 +15,7 @@ from app.dependencies.paginations import (
 from app.paginations.schemas import PaginatedResponse
 from app.products.schemas import ProductResponse
 from app.paginations.services import ProductService
+from app.products.enums import Reason
 
 
 products_router = APIRouter(
@@ -87,3 +88,14 @@ def get_stock_product_r(
 ):
         return get_stock_product_service(db, product_id)
 
+@products_router.patch("/{product_id}/stock-adjust")
+def adjust_stock_r(
+        product_id: int,
+        payload: ProductStockAdjust,  # <-- Cuma terima ini saja di body
+        db: Session = Depends(get_db)
+):
+        return adjust_stock_product(
+            db, 
+            product_id, 
+            payload
+        )

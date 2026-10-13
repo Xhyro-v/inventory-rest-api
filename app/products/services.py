@@ -4,9 +4,19 @@ from fastapi import HTTPException, Depends, status
 
 from app.db.session import get_db
 from app.products.models import Product as ProductModel
-from app.products.repository import get_by_id, create_product, update_product, get_by_sku, delete_product, get_stock_product
+from app.products.repository import (
+                                        get_by_id,
+                                        create_product,
+                                        update_product,
+                                        update_stock_product,
+                                        get_by_sku,
+                                        delete_product,
+                                        get_stock_product
+                                        )
 from app.dependencies.auth import get_current_user, RoleChecker
-from app.products.schemas import ProductCreate, ProductUpdate, ProductStockUpdate
+from app.products.schemas import ProductCreate, ProductUpdate, ProductStockAdjust
+from app.products.enums import Reason
+from app.inventory.models import StockHistory
 
 
 def create_product_service(
@@ -50,7 +60,7 @@ def update_product_service(
         data: ProductUpdate
 ):
         if not data:
-                raise HTTPExceptoion(
+                raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Data not found"
                 )
@@ -109,6 +119,71 @@ def delete_product_service(
                 "product" : product.name
         }
 
+
+def adjust_stock_product(
+        db: Session,
+        product_id: int,
+        payload: ProductStockAdjust
+):
+        product = get_by_id(db, product_id)
+
+        if not product:
+                raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Product not found"
+                )
+        
+        if payload.quantity_change == 0:
+                raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                        detail="Quantity change cannot be zero",
+                )
+
+        if payload.reason == Reason.RESTOCK and payload.quantity_change < 0:
+                raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Restock reason cannot have a negative quantity (to be add"
+                )
+
+        if payload.reason == Reason.LOST or Reason.DAMAGED and payload.quantity_change > 0:
+                        raise HTTPException(
+                                status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="{payload.reason} reason cannot have a positive quantity (to be reduce)"
+                        )
+
+        product_stock_before = product.stock
+
+        # Ambil langsung dari payload
+        product_stock_after = product_stock_before + payload.quantity_change
+
+        if product_stock_after < 0 :
+                raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Insufficient stock for this adjustment"
+                )
+        
+        try:
+                updated_stock_product = update_stock_product(db, product_id, product_stock_after)
+
+                if updated_stock_product is None:
+                        raise HTTPException(
+                                status_code=status.HTTP_404_NOT_FOUND,
+                                detail="Something wrong"
+                        )
+                return {
+                        "message": "Product stokc successfully adjusted",
+                        "product": product_id
+                }
+        
+        except HTTPException:
+                raise
+
+        except Exception:
+                db.rollback()
+                raise HTTPException(
+                        status_code=500,
+                        detail="Failed to update product stock",
+                )
 
 
 def get_product_by_sku(

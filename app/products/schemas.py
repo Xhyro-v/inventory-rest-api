@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 
+from app.products.enums import Reason
+
 class ProductCreate(BaseModel):
         sku : str = Field(
                 description="The SKU must be filled out in the format: name-series (using a hyphen)"
@@ -42,8 +44,12 @@ class ProductResponse(ORMSchema):
         stock: int
         status: bool
 
-class ProductStockUpdate(BaseModel):
-        stock : int 
+class ProductStockAdjust(BaseModel):
+        quantity_change : int = Field(
+                strict=True,
+                description="Stock adjust, (+) to add, (-) to reduce"
+        )
+        reason : Reason
 
 class ProductUpdate(BaseModel):
         name : str | None = None
@@ -51,3 +57,5 @@ class ProductUpdate(BaseModel):
         price : int | None = None
         status : bool | None = None
 
+class UpdateStock(BaseModel):
+        stock: int
