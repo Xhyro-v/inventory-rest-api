@@ -11,6 +11,10 @@ class UserRegister(BaseModel):
         password: str 
         confirm_password: str
 
+class UserResponse(BaseModel):
+        id: int
+        email: EmailStr
+
 class Token(BaseModel):
         acces_token : str
         token_type : str

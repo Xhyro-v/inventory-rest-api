@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.auth.schemas import UserRegister, UserLogin
+from app.auth.schemas import UserRegister, UserLogin, UserResponse
+from app.auth.models import User
 from app.db.session import get_db
 from app.auth.services import register_user, login_user
 from app.dependencies.auth import get_current_user, RoleChecker, allow_admin_only, allow_staff_and_admin
@@ -41,3 +42,8 @@ def get_access_token(
         )
 
         return login_user(db, data)
+
+@auth_router.get("/user", response_model=UserResponse)
+def read_current_user(current_user: User = Depends(get_current_user)):
+    """Endpoint untuk mengambil profil pengguna yang sedang login."""
+    return current_user
