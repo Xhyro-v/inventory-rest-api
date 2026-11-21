@@ -91,7 +91,7 @@ def get_stock_product_r(
 @products_router.patch("/{product_id}/stock-adjust")
 def adjust_stock_r(
         product_id: int,
-        payload: ProductStockAdjust,  # <-- Cuma terima ini saja di body
+        payload: ProductStockAdjust, 
         db: Session = Depends(get_db)
 ):
         return adjust_stock_product(

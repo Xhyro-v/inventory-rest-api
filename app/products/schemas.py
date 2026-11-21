@@ -59,3 +59,4 @@ class ProductUpdate(BaseModel):
 
 class UpdateStock(BaseModel):
         stock: int
+        

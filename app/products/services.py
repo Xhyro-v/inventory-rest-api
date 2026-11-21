@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, Depends, status
+from typing import Dict
 
 from app.db.session import get_db
 from app.products.models import Product as ProductModel
@@ -142,7 +143,7 @@ def adjust_stock_product(
         if payload.reason == Reason.RESTOCK and payload.quantity_change < 0:
                 raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Restock reason cannot have a negative quantity (to be add"
+                        detail="Restock reason cannot have a negative quantity (to be add)"
                 )
 
         if payload.reason == Reason.LOST or Reason.DAMAGED and payload.quantity_change > 0:
@@ -153,7 +154,7 @@ def adjust_stock_product(
 
         product_stock_before = product.stock
 
-        # Ambil langsung dari payload
+        # Take from payload
         product_stock_after = product_stock_before + payload.quantity_change
 
         if product_stock_after < 0 :
@@ -174,9 +175,6 @@ def adjust_stock_product(
                         "message": "Product stokc successfully adjusted",
                         "product": product_id
                 }
-        
-        except HTTPException:
-                raise
 
         except Exception:
                 db.rollback()
@@ -184,6 +182,29 @@ def adjust_stock_product(
                         status_code=500,
                         detail="Failed to update product stock",
                 )
+
+
+def check_stock(product: ProductModel, qty: int) -> None:
+    """Validate product is active and has enough stock. Raises HTTP 400/409-style errors."""
+    if not product.status:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail=f"Product '{product.name}' is inactive",
+        )
+    if qty > product.stock:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail=(
+                f"Insufficient stock for '{product.name}': "
+                f"requested {qty}, available {product.stock}"
+            ),
+        )
+
+
+def soft_check(products: Dict[int, ProductModel], requested: Dict[int, int]) -> None:
+    """Informational check at order creation. No lock, no reservation."""
+    for product_id, qty in requested.items():
+        check_stock(products[product_id], qty)
 
 
 def get_product_by_sku(

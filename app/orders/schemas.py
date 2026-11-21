@@ -38,3 +38,6 @@ class OrderRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     order_items: List[OrderItemRead]
+
+class UpdateStatusOrder(BaseModel):
+    status: OrderStatus

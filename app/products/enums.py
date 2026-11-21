@@ -5,3 +5,4 @@ class Reason(str, Enum):
     DAMAGED = " Damaged"
     LOST = "Lost"
     MANUAL_CORRECTION = "Manual_Correction"
+    BUY = "Buy"
