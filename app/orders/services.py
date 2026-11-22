@@ -24,6 +24,16 @@ from app.products.services import check_stock, soft_check
 from app.products.enums import Reason
 
 
+
+
+EVENT_MAP = {
+    OrderStatus.PENDING: OrderEvent.ORDER_CREATED,
+    OrderStatus.CONFIRMED: OrderEvent.ORDER_CONFIRMED,
+    OrderStatus.COMPLETED: OrderEvent.ORDER_COMPLETED,
+    OrderStatus.CANCELLED: OrderEvent.ORDER_CANCELLED,
+}
+
+
 def _resolve_customer(db: Session, name: str, phone: str) -> Customer:
     customer = get_by_phone(db, phone)
     if customer:
@@ -46,15 +56,12 @@ def _resolve_customer(db: Session, name: str, phone: str) -> Customer:
 
 def create_order(db: Session, payload: OrderCreate, actor: User) -> Order:
     try:
-        # 1-5. Customer resolution
         customer = _resolve_customer(db, payload.customer_name, payload.customer_phone)
 
-        # Merge duplicate product_id lines so stock is validated against the total
         requested: dict[int, int] = defaultdict(int)
         for item in payload.items:
             requested[item.product_id] += item.quantity
 
-        # Take product info (price, stock, status). Soft check: no lock, no reservation.
         products = db.scalars(
             select(Product).where(Product.id.in_(requested.keys()))
         ).all()
@@ -67,7 +74,6 @@ def create_order(db: Session, payload: OrderCreate, actor: User) -> Order:
                 detail=f"Product not found: {sorted(missing)}",
             )
 
-        # Validate active status and early stock check
         for product_id, qty in requested.items():
             product = product_map[product_id]
             if not product.status:
@@ -84,7 +90,6 @@ def create_order(db: Session, payload: OrderCreate, actor: User) -> Order:
                     ),
                 )
 
-        # Create order header (PENDING) + items. Stock is NOT deducted here.
         order = Order(
             customer_id=customer.id,
             total_amount=Decimal("0.00"),
@@ -106,9 +111,7 @@ def create_order(db: Session, payload: OrderCreate, actor: User) -> Order:
         order.total_amount = total
 
         db.add(order)
-        db.flush()  # get order.id
-
-        # Record OrderHistory (ORDER_CREATED)
+        db.flush()  
         db.add(
             OrderHistory(
                 order_id=order.id,
@@ -132,88 +135,86 @@ def create_order(db: Session, payload: OrderCreate, actor: User) -> Order:
     )
 
 
+from app.products import services as product_services
+
+
+def apply_stock_effects(
+    db: Session,
+    order: Order,
+    status_before: OrderStatus,
+    status_after: OrderStatus,
+    actor: User,
+) -> None:
+    # PENDING -> CONFIRMED: kurangi stok. CONFIRMED -> CANCELLED: kembalikan.
+    if status_before == OrderStatus.PENDING and status_after == OrderStatus.CONFIRMED:
+        sign, reason = -1, Reason.BUY
+    elif status_before == OrderStatus.CONFIRMED and status_after == OrderStatus.CANCELLED:
+        sign, reason = +1, Reason.CANCEL_RESTOCK
+    else:
+        return
+
+    requested: dict[int, int] = {}
+    for item in order.order_items:
+        requested[item.product_id] = requested.get(item.product_id, 0) + item.quantity
+
+    products = lock_products(db, sorted(requested))
+
+    missing = set(requested) - set(products)
+    if missing:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail=f"Product not found: {sorted(missing)}",
+        )
+
+    if sign < 0:
+        for product_id, qty in requested.items():
+            check_stock(products[product_id], qty)
+
+    for product_id in sorted(requested):
+        product_services.apply_stock_change(
+            db,
+            products[product_id],
+            sign * requested[product_id],
+            reason,
+            actor,
+            order_id=order.id,
+        )
+
     
 def change_order_status(
-    db: Session, 
+    db: Session,
     payload: UpdateStatusOrder,
-    order_id: int, 
-    actor: User
+    order_id: int,
+    actor: User,
 ) -> Order:
     try:
-        # 1. Fetch & lock order
-        order = get_by_id(db, order_id)
+        order = get_by_id(db, order_id, for_update=True)
         if order is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Order not found")
 
-        # 2. Prevent duplicate/redundant status changes
-        if order.status == payload.status:
-            raise HTTPException(
-                status.HTTP_409_CONFLICT,
-                detail=f"Order status is already {order.status.value}",
-            )
-
         status_before = order.status
 
-        # 3. Deduct stock ONLY when transitioning from PENDING -> CONFIRMED
-        if status_before == OrderStatus.PENDING and payload.status == OrderStatus.CONFIRMED:
-            requested: dict[int, int] = {}
-            for item in order.order_items:
-                requested[item.product_id] = requested.get(item.product_id, 0) + item.quantity
-
-            products = lock_products(db, requested.keys())
-
-            missing = set(requested) - set(products)
-            if missing:
-                raise HTTPException(
-                    status.HTTP_404_NOT_FOUND,
-                    detail=f"Product not found: {sorted(missing)}",
-                )
-
-            # Check stock availability
-            for product_id, qty in requested.items():
-                check_stock(products[product_id], qty)
-
-            # Deduct stock and log StockHistory
-            for product_id in sorted(requested):
-                qty = requested[product_id]
-                product = products[product_id]
-
-                stock_before = product.stock
-                product.stock = stock_before - qty
-
-                db.add(
-                    StockHistory(
-                        product_id=product_id,
-                        order_id=order.id,
-                        user_id=actor.id,
-                        quantity_change=-qty,
-                        stock_before=stock_before,
-                        stock_after=product.stock,
-                        reason=Reason.BUY,
-                    )
-                )
-
-        # 4. Map event dynamically based on payload status
-        event_map = {
-            OrderStatus.CONFIRMED: getattr(OrderEvent, "ORDER_CONFIRMED", "ORDER_CONFIRMED"),
-            OrderStatus.CANCELLED: getattr(OrderEvent, "ORDER_CANCELLED", "ORDER_CANCELLED"),
-        }
-        event = event_map.get(payload.status, OrderEvent.ORDER_CONFIRMED)
-
-        # 5. Apply new status and log OrderHistory
-        order.status = payload.status
-        db.add(
-            OrderHistory(
-                order_id=order.id,
-                event=event,
-                user_id=actor.id,
-                status_before=status_before,
-                status_after=payload.status,
-                reason=f"Order status changed to {payload.status.value}",
+        if not status_before.can_transition_to(payload.status):
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                detail=f"Cannot change status from {status_before.value} to {payload.status.value}",
             )
-        )
 
-        db.commit()
+        # efek stok (BUY / CANCEL_RESTOCK) 
+        apply_stock_effects(db, order, status_before, payload.status, actor)
+
+        update_order_status(db, order, payload.status)
+
+        db.add(OrderHistory(
+            order_id=order.id,
+            event=EVENT_MAP[payload.status],
+            user_id=actor.id,
+            status_before=status_before,
+            status_after=payload.status,
+            reason=f"Order status changed to {payload.status.value}",
+        ))
+
+        db.commit()         
     except Exception:
         db.rollback()
         raise

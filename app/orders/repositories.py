@@ -7,12 +7,11 @@ from app.orders.models import OrderItem, Order
 
 
 
-def get_by_id(
-        db: Session,
-        order_id: int
-):
-        return db.get(Order, order_id)
-        
+def get_by_id(db: Session, order_id: int, for_update: bool = False) -> Order | None:
+    stmt = select(Order).where(Order.id == order_id)
+    if for_update:
+        stmt = stmt.with_for_update()
+    return db.scalar(stmt)
 
 
 def create_order_item(db: Session, order_item: OrderItem) -> OrderItem:
@@ -23,22 +22,10 @@ def create_order_item(db: Session, order_item: OrderItem) -> OrderItem:
         return order_item
 
 
-def update_order_status(
-    db: Session, 
-    order_id: int, 
-    new_order_status: OrderStatus
-):
-    stmt = select(Order).where(Order.id == order_id)
-    order = db.scalar(stmt)
-    
-    if order:
-        order.status = new_order_status
-        db.commit()
-        db.refresh(order)
-        
-    return order
-
-
+def update_order_status(db: Session, order: Order, new_status: OrderStatus) -> Order:
+        order.status = new_status
+        db.flush()          # kirim ke DB tapi belum commit
+        return order
 
 
 
