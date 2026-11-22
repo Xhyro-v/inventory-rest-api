@@ -20,6 +20,14 @@ from app.products.enums import Reason
 from app.inventory.models import StockHistory
 
 
+from app.auth.models import User
+
+
+INCREASE_ONLY = {Reason.RESTOCK, Reason.CANCEL_RESTOCK}
+DECREASE_ONLY = {Reason.LOST, Reason.DAMAGED, Reason.BUY}
+
+
+
 def create_product_service(
         db: Session,
         data : ProductCreate
@@ -126,7 +134,7 @@ def adjust_stock_product(
         product_id: int,
         payload: ProductStockAdjust
 ):
-        product = get_by_id(db, product_id)
+        product = get_by_id(db, product_id, for_update=True)
 
         if not product:
                 raise HTTPException(
@@ -146,7 +154,7 @@ def adjust_stock_product(
                         detail="Restock reason cannot have a negative quantity (to be add)"
                 )
 
-        if payload.reason == Reason.LOST or Reason.DAMAGED and payload.quantity_change > 0:
+        if payload.reason == Reason.LOST in Reason.DAMAGED and payload.quantity_change > 0:
                         raise HTTPException(
                                 status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="{payload.reason} reason cannot have a positive quantity (to be reduce)"
@@ -262,3 +270,43 @@ def get_stock_product_service(
         }
 
 
+
+def apply_stock_change(
+    db: Session,
+    product: ProductModel,
+    quantity_change: int,
+    reason: Reason,
+    actor: User,
+    order_id: int | None = None,
+) -> StockHistory:
+    if quantity_change == 0:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT,
+                            detail="Quantity change cannot be zero")
+
+    if reason in INCREASE_ONLY and quantity_change < 0:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST,
+                            detail=f"{reason.value} requires a positive quantity")
+
+    if reason in DECREASE_ONLY and quantity_change > 0:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST,
+                            detail=f"{reason.value} requires a negative quantity")
+
+    stock_before = product.stock
+    stock_after = stock_before + quantity_change
+
+    if stock_after < 0:
+        raise HTTPException(status.HTTP_409_CONFLICT,
+                            detail=f"Insufficient stock for product {product.id}")
+
+    product.stock = stock_after
+    history = StockHistory(
+        product_id=product.id,
+        order_id=order_id,
+        user_id=actor.id,
+        quantity_change=quantity_change,
+        stock_before=stock_before,
+        stock_after=stock_after,
+        reason=reason,
+    )
+    db.add(history)
+    return history   # tidak commit
