@@ -26,3 +26,11 @@ def update_order_status(
     db: Session = Depends(get_db)
 ):
     return services.change_order_status(db, payload, order_id, actor)
+
+@order_router.patch("/{order_id}/status/cancell", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
+def cancell_order_status(
+    order_id: int,
+    actor: Session = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return services.cancell_order(db, order_id, actor)

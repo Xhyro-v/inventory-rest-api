@@ -21,6 +21,7 @@ from app.inventory.models import StockHistory
 from app.products.models import Product
 from app.products.repository import lock_products
 from app.products.services import check_stock, soft_check
+from app.products import services as product_services
 from app.products.enums import Reason
 
 
@@ -135,8 +136,6 @@ def create_order(db: Session, payload: OrderCreate, actor: User) -> Order:
     )
 
 
-from app.products import services as product_services
-
 
 def apply_stock_effects(
     db: Session,
@@ -221,3 +220,18 @@ def change_order_status(
 
     db.refresh(order)
     return order
+
+
+def cancell_order(
+        db: Session,
+        order_id: int,
+        actor: User
+):
+    payload = UpdateStatusOrder(status=OrderStatus.CANCELLED)
+
+    return change_order_status(db, payload, order_id, actor)
+
+
+
+
+
