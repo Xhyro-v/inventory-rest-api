@@ -7,6 +7,8 @@ from app.orders import services
 from app.orders.schemas import OrderCreate, OrderRead, UpdateStatusOrder
 from app.auth.models import User
 
+from app.dependencies.auth import get_current_user, RoleChecker, allow_admin_only, allow_staff_and_admin
+
 order_router = APIRouter(prefix="/orders", tags=["orders"])
 
 
@@ -15,6 +17,7 @@ def create_order(
     payload: OrderCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    access = Depends(allow_staff_and_admin)
 ):
     return services.create_order(db, payload, current_user)
 
@@ -23,7 +26,9 @@ def update_order_status(
     payload: UpdateStatusOrder,
     order_id: int,
     actor: Session = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    access = Depends(allow_staff_and_admin)
+    
 ):
     return services.change_order_status(db, payload, order_id, actor)
 
@@ -31,6 +36,8 @@ def update_order_status(
 def cancell_order_status(
     order_id: int,
     actor: Session = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    access = Depends(allow_staff_and_admin)
+
 ):
     return services.cancell_order(db, order_id, actor)
